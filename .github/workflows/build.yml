@@ -24,7 +24,7 @@ jobs:
         gcc-multilib git gnupg gperf imagemagick lib32readline-dev lib32z1-dev \
         libelf-dev liblz4-tool libsdl1.2-dev libssl-dev libxml2 libxml2-utils \
         lzma pinentry-curses rsync schedtool squashfs-tools xsltproc zip zlib1g-dev \
-        lib32ncurses5-dev libncurses5 libncurses5-dev python3 repo
+        libncurses-dev lib32ncurses-dev python3 repo
 
     - name: Configure Git
       run: |
@@ -34,7 +34,7 @@ jobs:
     - name: Initialize LineageOS Source
       run: |
         mkdir android && cd android
-        # Инициализация ветки 23.2, которую ты скинул
+        # Инициализация ветки 23.2
         repo init -u https://github.com/LineageOS/android.git -b lineage-23.2 --git-lfs --depth=1
 
     - name: Clone Device Specific Repositories
