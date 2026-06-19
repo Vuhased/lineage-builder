@@ -8,15 +8,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # 1. Максимальное расширение дискового пространства сервера
+    - name: Maximize Build Space
+      uses: easimon/maximize-build-space@v10
+      with:
+        root-reserve-mb: 1024
+        swap-size-mb: 1024
+        remove-dotnet: 'true'
+        remove-android: 'true'
+        remove-haskell: 'true'
+        remove-codeql: 'true'
+        remove-docker-images: 'true'
+
+    # 2. Скачивание репозитория-манифеста
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Free Disk Space
-      run: |
-        sudo rm -rf /usr/share/dotnet
-        sudo rm -rf /usr/local/lib/android
-        sudo rm -rf /opt/ghc
-
+    # 3. Установка пакетов компиляции
     - name: Install Build Dependencies
       run: |
         sudo apt-get update
@@ -31,16 +39,16 @@ jobs:
         git config --global user.name "Viktor"
         git config --global user.email "viktor@example.com"
 
+    # 4. Инициализация исходников LineageOS
     - name: Initialize LineageOS Source
       run: |
         mkdir android && cd android
-        # Инициализация ветки 23.2
         repo init -u https://github.com/LineageOS/android.git -b lineage-23.2 --git-lfs --depth=1
 
+    # 5. Клонирование репозиториев устройства sweet
     - name: Clone Device Specific Repositories
       run: |
         cd android
-        # Клонируем все деревья, хардвер, вендоров и ядро из твоего списка
         git clone https://github.com/LineageOS/android_hardware_xiaomi.git -b lineage-23.2 hardware/xiaomi
         git clone https://github.com/TheMuppets/proprietary_vendor_xiaomi_sm6150-common.git -b lineage-23.2 vendor/xiaomi/sm6150-common
         git clone https://github.com/LineageOS/android_device_xiaomi_sweet.git -b lineage-23.2 device/xiaomi/sweet
@@ -48,29 +56,27 @@ jobs:
         git clone https://github.com/LineageOS/android_kernel_xiaomi_sm6150.git -b lineage-23.2 kernel/xiaomi/sm6150
         git clone https://github.com/TheMuppets/proprietary_vendor_xiaomi_sweet.git -b lineage-23.2 vendor/xiaomi/sweet
 
+    # 6. Синхронизация кода с оптимизацией размера
     - name: Sync Source Code
       run: |
         cd android
-        repo sync -c -j$(nproc) --force-sync --no-clone-bundle --no-tags
+        repo sync -c -j$(nproc) --force-sync --no-clone-bundle --no-tags --prune
 
+    # 7. Подключение удаленной компиляции через BuildBuddy RBE
     - name: Setup BuildBuddy RBE Flags
       env:
         BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
         cd android
-        # Настройка Bazel / BuildBuddy RBE по гайду FossOnTop
         echo "build --bes_results_url=https://app.buildbuddy.io/invocation/" >> .bazelrc
         echo "build --bes_backend=grpcs://remote.buildbuddy.io" >> .bazelrc
         echo "common --remote_header=x-buildbuddy-api-key=$BB_KEY" >> .bazelrc
-        
-        # Переменная окружения для интеграции RBE в компиляцию Android
         echo "USE_RBE=true" >> build/envsetup.sh
 
+    # 8. Финальный запуск сборки прошивки
     - name: Execute Build
       run: |
         cd android
         source build/envsetup.sh
-        # Подготовка сборки конкретно под sweet (Redmi Note 10 Pro)
         breakfast sweet
-        # Запуск компиляции прошивки
         mka bacon
