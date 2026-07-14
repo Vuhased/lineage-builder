@@ -1,4 +1,4 @@
-/name: Build LineageOS 23.2 for Sweet with BuildBuddy RBE
+name: Build LineageOS 23.2 for Sweet with BuildBuddy RBE
 
 on:
   workflow_dispatch: # Позволяет запускать сборку кнопкой с телефона
