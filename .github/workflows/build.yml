@@ -60,7 +60,7 @@ jobs:
     - name: Sync Source Code
       run: |
         cd android
-        repo sync -c -j$(nproc) --force-sync --no-clone-bundle --no-tags --prune --depth=1
+        repo sync -c -j$(nproc) --force-sync --no-clone-bundle --no-tags --prune
 
     # 7. Подключение удаленной компиляции через BuildBuddy RBE
     - name: Setup BuildBuddy RBE Flags
